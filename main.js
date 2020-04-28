@@ -1,26 +1,34 @@
+require('dotenv').config();
 const app = require('express')();
+const bodyParser = require('body-parser');
 const http = require('http').Server(app);
 const io = require('socket.io')(http);
 const cors = require('cors');
-const formatMessage = require('./utils/messages');
+const { formatMessage } = require('./utils/messages');
 const {
     userJoin,
     getCurrentUser,
     userLeave,
-    getRoomUsers
+    getRoomUsers,
+    getUser
 } = require('./utils/users');
-const botName = 'ChatCord Bot';
+const botName = 'ITRooms Bot';
 
 const PORT = process.env.PORT || 3000;
 
 app.use(cors({ credentials: true, origin: '*' }));
-
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: false }));
+app.get('/', (request, response) => {
+    response.send('Wellcome to ITRooms server app')
+});
 
 io.on('connection', (socket) => {
-    console.log('user connected');
-    socket.on('joinRoom', ({ username, room }) => {
-        const user = userJoin(socket.id, username, room);
 
+    socket.on('joinRoom', ({ username, room }) => {
+        console.log(`user join room  ${username}`);
+
+        const user = userJoin(socket.id, username, room);
         socket.join(user.room);
 
         // Welcome current user
@@ -44,15 +52,17 @@ io.on('connection', (socket) => {
     // Listen for chatMessage
     socket.on('chatMessage', msg => {
         const user = getCurrentUser(socket.id);
+        console.log(user);
+        if (user)
+            io.to(user.room).emit('message', formatMessage(user.username, msg));
 
-        io.to(user.room).emit('message', formatMessage(user.username, msg));
     });
 
 
     // Runs when client disconnects
     socket.on('disconnect', () => {
+        console.log('disconect');
         const user = userLeave(socket.id);
-
         if (user) {
             io.to(user.room).emit(
                 'message',
