@@ -28,7 +28,7 @@ io.on('connection', (socket) => {
     socket.on('joinRoom', ({ username, room }) => {
         console.log(`user join room  ${username}`);
 
-        const user = userJoin(socket.id, username, room);
+        const user = getUser(username) || userJoin(socket.id, username, room);
         socket.join(user.room);
 
         // Welcome current user
@@ -57,7 +57,6 @@ io.on('connection', (socket) => {
             io.to(user.room).emit('message', formatMessage(user.username, msg));
 
     });
-
 
     // Runs when client disconnects
     socket.on('disconnect', () => {
