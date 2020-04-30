@@ -55,8 +55,15 @@ io.on('connection', (socket) => {
         console.log(user);
         if (user)
             io.to(user.room).emit('message', formatMessage(user.username, msg));
-
     });
+
+    // Listen for typing a message
+    socket.on('typing', data => {
+        const { room, username, isTyping } = data;
+        const response = isTyping ? { msg: `${username} is typing...`, username: username } : { msg: '', username: username };
+        io.to(room).emit('typing', response);
+    });
+
 
     // Runs when client disconnects
     socket.on('disconnect', () => {
