@@ -4,7 +4,7 @@ const bodyParser = require('body-parser');
 const http = require('http').Server(app);
 const io = require('socket.io')(http);
 const cors = require('cors');
-const { formatMessage } = require('./utils/messages');
+const { formatMessage, storeShareCode, getShareCodeForRoom } = require('./utils/messages');
 const {
     userJoin,
     getCurrentUser,
@@ -21,6 +21,12 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.get('/', (request, response) => {
     response.send('Wellcome to ITRooms server app')
+});
+
+app.get('/getShareCode/:room', (request, response) => {
+    const { room } = request.params;
+    const code = getShareCodeForRoom(room);
+    response.status(200).json(code)
 });
 
 io.on('connection', (socket) => {
@@ -64,6 +70,13 @@ io.on('connection', (socket) => {
         io.to(room).emit('typing', response);
     });
 
+    // Listen for sharing a code 
+    socket.on('shareCode', data => {
+        const { room, code } = data;
+        storeShareCode(room, code);
+        if (room)
+            io.to(room).emit('shareCode', data);
+    });
 
     // Runs when client disconnects
     socket.on('disconnect', () => {

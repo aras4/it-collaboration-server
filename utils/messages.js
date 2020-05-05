@@ -1,4 +1,5 @@
 const moment = require('moment');
+let storeShareMessage = {};
 
 function formatMessage(username, text) {
     return {
@@ -8,4 +9,12 @@ function formatMessage(username, text) {
     };
 }
 
-module.exports = { formatMessage };
+function storeShareCode(room, code) {
+    storeShareMessage[room] = code;
+}
+
+function getShareCodeForRoom(room) {
+    return storeShareMessage[room];
+}
+
+module.exports = { formatMessage, storeShareCode, getShareCodeForRoom };
