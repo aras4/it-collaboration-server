@@ -17,4 +17,8 @@ function getShareCodeForRoom(room) {
     return storeShareMessage[room];
 }
 
-module.exports = { formatMessage, storeShareCode, getShareCodeForRoom };
+function cleanShareCodeForRoom(room) {
+    storeShareMessage[room] = null;
+}
+
+module.exports = { formatMessage, storeShareCode, getShareCodeForRoom, cleanShareCodeForRoom };

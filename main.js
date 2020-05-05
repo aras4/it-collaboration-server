@@ -4,7 +4,7 @@ const bodyParser = require('body-parser');
 const http = require('http').Server(app);
 const io = require('socket.io')(http);
 const cors = require('cors');
-const { formatMessage, storeShareCode, getShareCodeForRoom } = require('./utils/messages');
+const { formatMessage, storeShareCode, getShareCodeForRoom, cleanShareCodeForRoom } = require('./utils/messages');
 const {
     userJoin,
     getCurrentUser,
@@ -15,6 +15,7 @@ const {
 const botName = 'ITRooms Bot';
 
 const PORT = process.env.PORT || 3000;
+let currentRoom = '';
 
 app.use(cors({ credentials: true, origin: '*' }));
 app.use(bodyParser.json());
@@ -30,8 +31,8 @@ app.get('/getShareCode/:room', (request, response) => {
 });
 
 io.on('connection', (socket) => {
-
     socket.on('joinRoom', ({ username, room }) => {
+        currentRoom = room;
         console.log(`user join room  ${username}`);
 
         const user = getUser(username) || userJoin(socket.id, username, room);
@@ -93,7 +94,17 @@ io.on('connection', (socket) => {
                 room: user.room,
                 users: getRoomUsers(user.room)
             });
+
         }
+
+        setTimeout(() => {
+            console.log('Clean share code in room if all users left');
+            const roomUsers = getRoomUsers(currentRoom);
+            if (roomUsers === null || roomUsers.length === 0) {
+                cleanShareCodeForRoom(currentRoom)
+                console.log('Share Code is cleaned for room ' + currentRoom);
+            }
+        }, 5000);
     });
 });
 
